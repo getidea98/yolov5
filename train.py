@@ -32,6 +32,7 @@ import torch.nn as nn
 import yaml
 from torch.optim import lr_scheduler
 from tqdm import tqdm
+import requests
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -467,6 +468,7 @@ def parse_opt(known=False):
     parser.add_argument('--save-period', type=int, default=-1, help='Save checkpoint every x epochs (disabled if < 1)')
     parser.add_argument('--seed', type=int, default=0, help='Global training seed')
     parser.add_argument('--local_rank', type=int, default=-1, help='Automatic DDP Multi-GPU argument, do not modify')
+    parser.add_argument('--token', type=str, default='', help='autodl 消息推送的令牌')
 
     # Logger arguments
     parser.add_argument('--entity', default=None, help='Entity')
@@ -620,6 +622,28 @@ def main(opt, callbacks=Callbacks()):
                     f'Usage example: $ python train.py --hyp {evolve_yaml}')
 
 
+def push_msg(opt, startTime, endTime):
+    start_time_tuple = time.localtime(startTime)
+    end_time_tuple = time.localtime(endTime)
+
+    headers = {'Authorization': opt.token}
+    resp = requests.post('https://www.autodl.com/api/v1/wechat/message/send',
+                         json={
+                             "title": "来自训练结果",
+                             "name": "AutoDL训练结果",
+                             "content": 'Epoch={},startTime={}年{}月{}日{}点{}分{}秒,endTime={}年{}月{}日{}点{}分{}秒,'
+                                        'timeConsuming={}'.format(opt.epochs, start_time_tuple[0], start_time_tuple[1],
+                                                                  start_time_tuple[2], start_time_tuple[3],
+                                                                  start_time_tuple[4], start_time_tuple[5],
+                                                                  end_time_tuple[0],
+                                                                  end_time_tuple[1], end_time_tuple[2],
+                                                                  end_time_tuple[3], end_time_tuple[4],
+                                                                  end_time_tuple[5],
+                                                                  time.strftime('%H:%M:%S',
+                                                                                time.gmtime(endTime - startTime)))
+                         }, headers=headers)
+
+
 def run(**kwargs):
     # Usage: import train; train.run(data='coco128.yaml', imgsz=320, weights='yolov5m.pt')
     opt = parse_opt(True)
@@ -630,5 +654,8 @@ def run(**kwargs):
 
 
 if __name__ == "__main__":
+    startTime = time.time()
     opt = parse_opt()
     main(opt)
+    endTime = time.time()
+    push_msg(opt, startTime, endTime)
