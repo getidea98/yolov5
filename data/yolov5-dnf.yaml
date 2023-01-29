@@ -1,5 +1,5 @@
-train: C:/Users/Administrator/train/images
-val: C:/Users/Administrator/val/images
+train: train/images
+val: val/images
 nc: 5
 
 names: ['hero', 'money', 'monster', 'door', 'options']
