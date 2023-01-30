@@ -1,5 +1,5 @@
-train: ../yolov5_images/0、可用于训练/train/images
-val: ../yolov5_images/0、可用于训练/val/images
+train: train/images
+val: val/images
 nc: 5
 
 names: ['hero', 'money', 'monster', 'door', 'options']
